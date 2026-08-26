@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>算数質問箱</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 20px auto; padding: 10px; }
+        .btn { display: inline-block; background: #28a745; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; }
+        .issue { border: 1px solid #ccc; padding: 15px; margin-top: 20px; border-radius: 5px; }
+        .question { background: #f9f9f9; padding: 10px; border-left: 5px solid #007bff; }
+        .answer { background: #e6f7ff; padding: 10px; margin-top: 10px; border-left: 5px solid #28a745; }
+        .no-answer { color: #666; font-style: italic; }
+    </style>
+</head>
+<body>
+    <h1>🧮 算数質問箱</h1>
+    <a href="ask.html" class="btn">🙋 質問を投稿する</a>
+
+    <h2>質問と回答一覧</h2>
+    <div id="questions-container">読み込み中...</div>
+
+    <script>
+        // 自動生成されるJSONファイルを読み込んで表示
+        fetch('data.json')
+            .then(response => {
+                if (!response.ok) throw new Error('質問データがまだありません。');
+                return response.json();
+            })
+            .then(data => {
+                const container = document.getElementById('questions-container');
+                if (data.length === 0) {
+                    container.innerHTML = '<p>まだ質問はありません。</p>';
+                    return;
+                }
+                
+                container.innerHTML = '';
+                data.forEach(item => {
+                    const issueDiv = document.createElement('div');
+                    issueDiv.className = 'issue';
+                    
+                    // 回答（コメント）のパース
+                    let answerHtml = '<p class="no-answer">⏰ 先生からの回答を待っています...</p>';
+                    if (item.comments && item.comments.length > 0) {
+                        // 最初のコメントを回答とする
+                        answerHtml = `<div class="answer"><strong>👨‍🏫 先生からの回答:</strong><br>${item.comments[0].body.replace(/\n/g, '<br>')}</div>`;
+                    }
+
+                    issueDiv.innerHTML = `
+                        <h3>${item.title}</h3>
+                        <div class="question">
+                            <strong>❓ 質問:</strong><br>
+                            ${item.body.replace(/\n/g, '<br>')}
+                        </div>
+                        ${answerHtml}
+                    `;
+                    container.appendChild(issueDiv);
+                });
+            })
+            .catch(error => {
+                document.getElementById('questions-container').innerHTML = `<p>${error.message}</p>`;
+            });
+    </script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+name: Update Site Data
+
+on:
+  issues:
+    types: [opened, edited, deleted, closed, reopened]
+  issue_comment:
+    types: [created, edited, deleted]
+
+permissions:
+  contents: write
+
+jobs:
+  update-json:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Fetch Issues and Comments
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 読みやすくするためにGitHub CLIを使用してIssueとコメントを取得し、JSONに保存
+          gh api -X GET /repos/${{ github.repository }}/issues?state=all \
+            --jq '[.[] | {number: .number, title: .title, body: .body, comments_url: .comments_url}]' > raw_issues.json
+
+          # 各Issueのコメントを取得して結合するスクリプトを実行
+          node - e '
+          const fs = require("fs");
+          const { execSync } = require("child_process");
+          
+          const issues = JSON.parse(fs.readFileSync("raw_issues.json", "utf8"));
+          const result = [];
+
+          for (const issue of issues) {
+            // プルリクエストは除外
+            if (issue.comments_url.includes("/pulls/")) continue;
+            
+            try {
+              const commentsRaw = execSync(`gh api -X GET ${issue.comments_url}`).toString();
+              const comments = JSON.parse(commentsRaw).map(c => ({ body: c.body, user: c.user.login }));
+              result.push({
+                title: issue.title,
+                body: issue.body || "本文なし",
+                comments: comments
+              });
+            } catch (e) {
+              console.error("Error fetching comments for issue " + issue.number, e);
+            }
+          }
+          fs.writeFileSync("data.json", JSON.stringify(result, null, 2));
+          '
+
+      - name: Commit and Push Changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add data.json
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update data.json" && git push)

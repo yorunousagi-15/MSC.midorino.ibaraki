@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>算数質問箱 - 質問する</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 20px auto; padding: 10px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; }
+        input[type="text"], textarea { width: 100%; padding: 8px; box-sizing: border-box; }
+        button { background: #007bff; color: white; padding: 10px 15px; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🧮 算数の質問を投稿する</h1>
+    <p><a href="index.html">← 質問一覧に戻る</a></p>
+    
+    <div class="form-group">
+        <label for="title">質問のタイトル（例：分数の割り算について）</label>
+        <input type="text" id="title" placeholder="ここにタイトルを入力">
+    </div>
+    <div class="form-group">
+        <label for="body">詳しい質問内容</label>
+        <textarea id="body" rows="5" placeholder="わからない問題や、どこでつまずいているか書いてね"></textarea>
+    </div>
+    <button onclick="submitQuestion()">GitHubで質問を送信する</button>
+
+    <script>
+        function submitQuestion() {
+            // あなたのGitHubユーザー名とリポジトリ名に書き換えてください
+            const githubUser = "YOUR_GITHUB_USERNAME";
+            const repoName = "YOUR_REPO_NAME";
+            
+            const title = encodeURIComponent(document.getElementById('title').value);
+            const body = encodeURIComponent(document.getElementById('body').value);
+            
+            if(!title || !body) {
+                alert("タイトルと内容を入力してください。");
+                return;
+            }
+            
+            // GitHubのIssue作成画面へリダイレクト（フォーム内容をURLに埋め込む）
+            const url = `https://github.com{githubUser}/${repoName}/issues/new?title=${title}&body=${body}`;
+            window.location.href = url;
+        }
+    </script>
+</body>
+</html>
